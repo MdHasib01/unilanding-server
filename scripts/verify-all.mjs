@@ -17,6 +17,7 @@ const SUITES = [
   { file: 'verify-models.mjs', name: 'Data model & tenant isolation', needsWeb: false },
   { file: 'verify-auth.mjs', name: 'Authentication & sessions', needsWeb: false },
   { file: 'verify-platform.mjs', name: 'Platform API & provisioning', needsWeb: false },
+  { file: 'verify-dashboard.mjs', name: 'Platform dashboard (browser flow)', needsWeb: true },
   { file: 'verify-e2e.mjs', name: 'End to end (API + Next + Atlas)', needsWeb: true },
 ];
 

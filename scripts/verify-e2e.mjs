@@ -219,9 +219,12 @@ try {
   const pUnknown = await page('/', 'not-ours-at-all.example');
   yes(pUnknown.body.includes('Domain not configured') || pUnknown.body.includes('ডোমেইন'),
     'an unmapped host shows the unknown-domain page');
+  // The platform root is a doorway for now, not a marketing page: signed out
+  // it sends you to sign in, signed in it sends you to the dashboard. The
+  // public marketing site replaces it later at the same route.
   const pPlatform = await page('/', 'unilanding.local:3000');
-  eq(pPlatform.status, 200, 'the platform host still serves its own home page');
-  yes(pPlatform.body.includes('Landing pages that take orders'), 'platform marketing copy, not a tenant');
+  eq(pPlatform.status, 307, 'the platform root redirects rather than rendering a tenant');
+  yes(pPlatform.location?.includes('/login'), 'signed out, it goes to sign-in');
 
   console.log('\n=== 7. /admin is tenant-only on the platform host ===');
   const pAdmin = await page('/admin', 'unilanding.local:3000');
