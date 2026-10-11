@@ -21,6 +21,10 @@ const schema = z.object({
   // Hosts
   PLATFORM_HOST: z.string().min(1, 'PLATFORM_HOST is required (e.g. unilanding.local:3000)'),
   PUBLIC_BASE_URL: z.string().url().default('http://unilanding.local:3000'),
+  // Extra names that mean "the platform". Loopback names are included by
+  // default so http://localhost:3000 works with no setup; clear this in
+  // production.
+  PLATFORM_HOST_ALIASES: csv().default('localhost,127.0.0.1,::1'),
   TRUST_PROXY: z.string().default('1'),
   CORS_ORIGINS: csv(),
 
@@ -86,3 +90,27 @@ export const isDev = env.NODE_ENV === 'development';
 
 /** Hostname only, no port — for comparing against a request Host header. */
 export const PLATFORM_HOSTNAME = env.PLATFORM_HOST.split(':')[0].toLowerCase();
+
+/**
+ * Every hostname that means "the platform itself". Must agree with the client's
+ * platformHosts() or the two tiers would disagree about whether a request is
+ * for the platform or for a tenant.
+ */
+export const PLATFORM_HOSTS = (() => {
+  const all = new Set([PLATFORM_HOSTNAME, `www.${PLATFORM_HOSTNAME}`]);
+  for (const a of env.PLATFORM_HOST_ALIASES) {
+    // Port-stripping must not split an IPv6 literal: '::1'.split(':')[0] is
+    // the empty string, which would silently drop ::1 from this list and make
+    // an IPv6 loopback request look like an unknown custom domain.
+    const raw = String(a).trim().toLowerCase();
+    const bracketed = raw.match(/^\[(.+)\](?::\d+)?$/);
+    const h = bracketed
+      ? bracketed[1]
+      : (raw.match(/:/g) ?? []).length > 1
+        ? raw // bare IPv6 such as ::1 — no port to strip
+        : raw.split(':')[0];
+    if (h) all.add(h);
+  }
+  all.delete('');
+  return [...all];
+})();

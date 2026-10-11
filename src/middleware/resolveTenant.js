@@ -1,8 +1,8 @@
 import { Tenant, Domain, scopedModels } from '../models/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError, notFoundError, forbidden } from '../utils/AppError.js';
-import { requestHost } from '../utils/host.js';
-import { PLATFORM_HOSTNAME } from '../config/env.js';
+import { requestHost, isPlatformHost, tenantLabelFromHost } from '../utils/host.js';
+import { PLATFORM_HOSTS } from '../config/env.js';
 import { RESERVED_SLUGS } from '../utils/slug.js';
 
 /**
@@ -55,9 +55,9 @@ async function tenantByHost(host) {
   if (cached !== undefined) return cached;
 
   // A platform subdomain encodes its own slug, so skip the Domain lookup.
-  if (host.endsWith(`.${PLATFORM_HOSTNAME}`)) {
-    const label = host.slice(0, -(PLATFORM_HOSTNAME.length + 1));
-    if (label && !label.includes('.') && !RESERVED_SLUGS.has(label)) {
+  const label = tenantLabelFromHost(host, PLATFORM_HOSTS);
+  if (label) {
+    if (!RESERVED_SLUGS.has(label)) {
       const tenant = await tenantBySlug(label);
       cacheSet(key, tenant || null);
       return tenant || null;
@@ -104,7 +104,8 @@ function makeResolver({ required = true, allowSuspended = false } = {}) {
 
     if (!tenant) {
       const host = requestHost(req);
-      if (host && host !== PLATFORM_HOSTNAME && host !== `www.${PLATFORM_HOSTNAME}`) {
+      // A platform host (including localhost in development) is never a tenant.
+      if (host && !isPlatformHost(host, PLATFORM_HOSTS)) {
         tenant = await tenantByHost(host);
       }
     }

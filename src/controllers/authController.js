@@ -4,8 +4,8 @@ import { User, Tenant, Domain } from '../models/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ok } from '../utils/respond.js';
 import { AppError, unauthorized, badRequest, notFoundError } from '../utils/AppError.js';
-import { requestHost } from '../utils/host.js';
-import { PLATFORM_HOSTNAME, env } from '../config/env.js';
+import { requestHost, isPlatformHost, tenantLabelFromHost } from '../utils/host.js';
+import { PLATFORM_HOSTS, env } from '../config/env.js';
 import {
   setSessionCookie,
   clearSessionCookies,
@@ -34,9 +34,9 @@ async function resolveLoginScope(req) {
   }
 
   const host = requestHost(req);
-  if (host && host !== PLATFORM_HOSTNAME && host !== `www.${PLATFORM_HOSTNAME}`) {
-    if (host.endsWith(`.${PLATFORM_HOSTNAME}`)) {
-      const label = host.slice(0, -(PLATFORM_HOSTNAME.length + 1));
+  if (host && !isPlatformHost(host, PLATFORM_HOSTS)) {
+    const label = tenantLabelFromHost(host, PLATFORM_HOSTS);
+    if (label) {
       const tenant = await Tenant.findOne({ slug: label });
       if (tenant) return { scope: 'tenant', tenant };
     }

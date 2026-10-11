@@ -1,8 +1,8 @@
 import { Tenant, Domain } from '../../models/index.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ok } from '../../utils/respond.js';
-import { normalizeHost } from '../../utils/host.js';
-import { PLATFORM_HOSTNAME } from '../../config/env.js';
+import { normalizeHost, isPlatformHost, tenantLabelFromHost } from '../../utils/host.js';
+import { PLATFORM_HOSTNAME, PLATFORM_HOSTS } from '../../config/env.js';
 import { RESERVED_SLUGS } from '../../utils/slug.js';
 import { bustTenantCache } from '../../middleware/resolveTenant.js';
 
@@ -19,17 +19,18 @@ export const resolveHost = asyncHandler(async (req, res) => {
   const host = normalizeHost(req.query.host);
   if (!host) return ok(res, { found: false, reason: 'no host supplied' });
 
-  // The platform itself is not a tenant.
-  if (host === PLATFORM_HOSTNAME || host === `www.${PLATFORM_HOSTNAME}`) {
+  // The platform itself is not a tenant. Includes the loopback aliases, so a
+  // request for localhost is answered "platform", not "unknown domain".
+  if (isPlatformHost(host, PLATFORM_HOSTS)) {
     return ok(res, { found: false, platform: true });
   }
 
   let tenant = null;
   let domain = null;
 
-  if (host.endsWith(`.${PLATFORM_HOSTNAME}`)) {
-    const label = host.slice(0, -(PLATFORM_HOSTNAME.length + 1));
-    if (!label || label.includes('.') || RESERVED_SLUGS.has(label)) {
+  const label = tenantLabelFromHost(host, PLATFORM_HOSTS);
+  if (label) {
+    if (RESERVED_SLUGS.has(label)) {
       return ok(res, { found: false, reason: 'reserved or invalid subdomain' });
     }
     tenant = await Tenant.findOne({ slug: label });

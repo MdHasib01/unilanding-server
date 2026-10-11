@@ -23,3 +23,22 @@ export function normalizeHost(raw) {
 export function requestHost(req) {
   return normalizeHost(req.headers['x-forwarded-host'] || req.headers.host);
 }
+
+/** True when this host means "the platform itself" rather than a tenant. */
+export function isPlatformHost(host, platformHosts) {
+  return platformHosts.includes(host);
+}
+
+/**
+ * The tenant slug encoded in a platform subdomain, or null.
+ * demo.unilanding.local -> 'demo'; demo.localhost -> 'demo'.
+ */
+export function tenantLabelFromHost(host, platformHosts) {
+  for (const base of platformHosts) {
+    if (!host.endsWith(`.${base}`)) continue;
+    const label = host.slice(0, -(base.length + 1));
+    if (!label || label.includes('.')) continue;
+    return label;
+  }
+  return null;
+}
