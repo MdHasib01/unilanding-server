@@ -11,7 +11,9 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "seed": "node src/seed/seed.js",
-    "seed:demo": "node src/seed/seedDemoTenant.js"
+    "seed:demo": "node src/seed/seedDemoTenant.js",
+    "test": "node scripts/verify-all.mjs",
+    "db:inspect": "node scripts/inspect-db.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

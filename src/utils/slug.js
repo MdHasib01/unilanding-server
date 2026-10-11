@@ -19,7 +19,7 @@ export const slugify = (input) =>
  */
 export const RESERVED_SLUGS = new Set([
   'platform', 'admin', 'login', 'logout', 'signup', 'register', 'dashboard',
-  'api', 'internal', '_next', '__ul', 'assets', 'static', 'public', 'uploads',
+  'api', 'internal', '_next', 'ul', 'assets', 'static', 'public', 'uploads',
   'pricing', 'docs', 'help', 'support', 'about', 'legal', 'terms', 'privacy',
   'blog', 'status', 'www', 'mail', 'email', 'cdn', 'img', 'images', 'media',
   'app', 'auth', 'account', 'billing', 'settings', 'onboarding', 'demo', 'test',

@@ -44,6 +44,14 @@ const userSchema = new mongoose.Schema(
     /** Bumped to force-logout every session for this user. */
     tokenVersion: { type: Number, default: 0 },
 
+    /**
+     * Password-reset token, stored HASHED exactly like a password: a leaked
+     * database must not hand over working reset links. Persisted rather than
+     * held in memory so a deploy restart does not invalidate outstanding links.
+     */
+    passwordResetHash: { type: String, default: '', select: false },
+    passwordResetExpiresAt: { type: Date, default: null, select: false },
+
     invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }

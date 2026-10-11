@@ -18,7 +18,10 @@ export function errorHandler(err, req, res, _next) {
   let status = err.statusCode || 500;
   let code = err.code;
   let message = err.message || 'Internal server error';
-  let details;
+  // AppError carries its own details (e.g. which field failed validation,
+  // or the plan limit that was hit). Seed from it, then let the branches
+  // below override for error shapes we translate ourselves.
+  let details = err.details;
 
   if (err instanceof ZodError) {
     status = 422;

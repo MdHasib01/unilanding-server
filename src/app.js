@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { env, isProd } from './config/env.js';
 import { logger } from './config/logger.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
+import { csrfProtect } from './middleware/csrf.js';
 import apiRouter from './routes/index.js';
 
 export function createApp() {
@@ -55,7 +56,9 @@ export function createApp() {
     res.json({ success: true, data: { status: 'ok', env: env.NODE_ENV, uptime: process.uptime() } })
   );
 
-  app.use('/api', apiRouter);
+  // CSRF after cookieParser and before the routes. Exempts /public/* and
+  // /internal/*, which carry no session cookie to ride on.
+  app.use('/api', csrfProtect, apiRouter);
 
   app.use(notFound);
   app.use(errorHandler);

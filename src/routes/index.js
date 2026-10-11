@@ -1,12 +1,17 @@
 import { Router } from 'express';
+import authRoutes from './authRoutes.js';
+import platformRoutes from './platformRoutes.js';
+import internalRoutes from './internalRoutes.js';
+import publicRoutes from './publicRoutes.js';
 
 const router = Router();
 
-// Route groups are mounted here as each phase lands:
-//   /auth      authRoutes       (Phase 2)
-//   /platform  platformRoutes   (Phase 4)
-//   /t         tenantRoutes     (Phase 7)
-//   /public    publicRoutes     (Phase 6)
-//   /internal  internalRoutes   (Phase 5)
+router.use('/auth', authRoutes);
+router.use('/platform', platformRoutes);
+router.use('/internal', internalRoutes);
+router.use('/public', publicRoutes);
+
+// Mounted as each phase lands:
+//   /t  tenantRoutes
 
 export default router;
