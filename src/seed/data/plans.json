@@ -1,0 +1,84 @@
+[
+  {
+    "code": "starter",
+    "name": "Starter",
+    "description": "One landing page on a unilanding.com subdomain. For validating a single product.",
+    "price": 1500,
+    "currency": "BDT",
+    "interval": "monthly",
+    "limits": {
+      "landingPages": 1,
+      "products": 5,
+      "staffUsers": 2,
+      "ordersPerMonth": 500,
+      "customDomains": 0,
+      "mediaMb": 200,
+      "sectionTypes": null
+    },
+    "features": [
+      "1 landing page",
+      "unilanding.com subdomain",
+      "Order management",
+      "Cash on delivery",
+      "Bangla + English"
+    ],
+    "sortOrder": 1,
+    "active": true,
+    "public": true
+  },
+  {
+    "code": "business",
+    "name": "Business",
+    "description": "Your own domain, more products, courier and SMS integrations.",
+    "price": 4000,
+    "currency": "BDT",
+    "interval": "monthly",
+    "limits": {
+      "landingPages": 3,
+      "products": 50,
+      "staffUsers": 5,
+      "ordersPerMonth": 5000,
+      "customDomains": 1,
+      "mediaMb": 1000,
+      "sectionTypes": null
+    },
+    "features": [
+      "3 landing pages",
+      "Custom domain",
+      "Steadfast courier",
+      "SMS notifications",
+      "Meta Pixel + Conversions API",
+      "5 staff users"
+    ],
+    "sortOrder": 2,
+    "active": true,
+    "public": true
+  },
+  {
+    "code": "pro",
+    "name": "Pro",
+    "description": "Unlimited pages, multiple domains, white-label.",
+    "price": 9000,
+    "currency": "BDT",
+    "interval": "monthly",
+    "limits": {
+      "landingPages": 25,
+      "products": 500,
+      "staffUsers": 20,
+      "ordersPerMonth": 50000,
+      "customDomains": 5,
+      "mediaMb": 5000,
+      "sectionTypes": null
+    },
+    "features": [
+      "25 landing pages",
+      "5 custom domains",
+      "White-label (no UniLanding branding)",
+      "Priority support",
+      "20 staff users"
+    ],
+    "sortOrder": 3,
+    "active": true,
+    "public": true
+  }
+]
