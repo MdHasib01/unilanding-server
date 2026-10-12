@@ -134,7 +134,8 @@ try {
   eq(tA?.domain?.status, 'active', 'subdomain is active (wildcard cert)');
   eq(tA?.domain?.isPrimary, true, 'subdomain is primary');
   truthy(tA?.page, 'landing page created');
-  eq(tA?.page?.sections, 16, 'bd-dtc-v1 produced 16 sections');
+  // 15: the MilkReady order, with the doctors carousel inside the certifications section.
+  eq(tA?.page?.sections, 15, 'bd-dtc-v1 produced 15 sections');
   eq(tA?.pageError, null, 'no page error');
   eq(tA?.adminUrls?.length, 2, 'both admin URLs returned (host mode + path mode)');
   truthy(tA?.adminUrls?.[1]?.endsWith(`/${SLUG_A}/admin`), 'path-mode admin URL is correct');

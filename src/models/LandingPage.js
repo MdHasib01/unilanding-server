@@ -37,6 +37,33 @@ const themeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const imageRef = {
+  url: { type: String, default: '' },
+  publicId: { type: String, default: '' },
+};
+
+/**
+ * Page-level identity: logo, product shot, favicon. Lives in the content slot
+ * (not on the Tenant) so a logo change is drafted and published with the rest
+ * of the page instead of going live the instant it is uploaded.
+ *
+ * `productImage` is the fallback for every section image that is left empty —
+ * hero, benefits centre, price card, loader — so one upload re-skins the page.
+ */
+const brandSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: '' },
+    logoType: { type: String, enum: ['image', 'text'], default: 'text' },
+    logo: imageRef,
+    logoText: { type: String, default: '' },
+    logoTextAccent: { type: String, default: '' },
+    productImage: imageRef,
+    favicon: imageRef,
+    loaderBadge: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 const trackingSchema = new mongoose.Schema(
   {
     metaPixelId: { type: String, default: '' },
@@ -68,6 +95,7 @@ const sectionSchema = new mongoose.Schema(
 );
 
 const contentSlot = {
+  brand: { type: brandSchema, default: () => ({}) },
   seo: { type: seoSchema, default: () => ({}) },
   theme: { type: themeSchema, default: () => ({}) },
   tracking: { type: trackingSchema, default: () => ({}) },

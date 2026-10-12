@@ -169,7 +169,7 @@ try {
   eq(result.adminUrls.length, 2, 'both admin URLs are returned');
   yes(result.adminUrls[0].includes(`${SLUG}.unilanding.local`), 'first admin URL is the subdomain');
   yes(result.adminUrls[1].includes(`/${SLUG}/admin`), 'second admin URL is the path form');
-  eq(result.page.sections, 16, 'the landing page starts with 16 sections');
+  eq(result.page.sections, 15, 'the landing page starts with the 15 MilkReady sections');
 
   console.log('\n=== 7. It appears in the list, and is reachable ===');
   const list = await hit('/platform/tenants', { jar });

@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as pc from '../controllers/public/pageController.js';
+import * as oc from '../controllers/public/orderController.js';
+import { publicOrderLimiter } from '../middleware/rateLimit.js';
+import { createOrderSchema, orderPublicIdParam } from '../schemas/order.js';
 import { resolveTenant } from '../middleware/resolveTenant.js';
 import { validate } from '../middleware/validate.js';
 import { LOCALES } from '../utils/constants.js';
@@ -48,5 +51,22 @@ router.get(
 );
 
 router.get('/products/:tenantSlug', validate({ params: slugParam }), resolveTenant, pc.listProducts);
+
+// Orders. The tenant comes from the host or the X-Tenant-Slug header the order
+// form sends (path mode runs on the platform host, so the host alone is not
+// enough there). Rate-limited per subnet per tenant: there is no session here.
+router.post(
+  '/orders',
+  resolveTenant,
+  publicOrderLimiter,
+  validate({ body: createOrderSchema }),
+  oc.createOrder
+);
+router.get(
+  '/orders/:publicId',
+  validate({ params: orderPublicIdParam }),
+  resolveTenant,
+  oc.getOrderSummary
+);
 
 export default router;

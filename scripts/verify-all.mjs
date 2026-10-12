@@ -17,6 +17,7 @@ const SUITES = [
   { file: 'verify-models.mjs', name: 'Data model & tenant isolation', needsWeb: false },
   { file: 'verify-auth.mjs', name: 'Authentication & sessions', needsWeb: false },
   { file: 'verify-platform.mjs', name: 'Platform API & provisioning', needsWeb: false },
+  { file: 'verify-tenant-admin.mjs', name: 'Tenant admin, uploads & orders', needsWeb: false },
   { file: 'verify-localhost.mjs', name: 'Zero-setup localhost', needsWeb: true },
   { file: 'verify-dashboard.mjs', name: 'Platform dashboard (browser flow)', needsWeb: true },
   { file: 'verify-e2e.mjs', name: 'End to end (API + Next + Atlas)', needsWeb: true },

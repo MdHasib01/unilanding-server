@@ -22,7 +22,7 @@ export const RESERVED_SLUGS = new Set([
   'api', 'internal', '_next', 'ul', 'assets', 'static', 'public', 'uploads',
   'pricing', 'docs', 'help', 'support', 'about', 'legal', 'terms', 'privacy',
   'blog', 'status', 'www', 'mail', 'email', 'cdn', 'img', 'images', 'media',
-  'app', 'auth', 'account', 'billing', 'settings', 'onboarding', 'demo', 'test',
+  'app', 'auth', 'account', 'billing', 'settings', 'onboarding', 'demo', 'test', 'templates',
 ]);
 
 export function assertUsableSlug(slug) {

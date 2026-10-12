@@ -45,17 +45,31 @@ export async function buildSectionsFromTemplate(templateId = 'bd-dtc-v1') {
   }));
 }
 
+/** The MilkReady palette — the reference page every new landing starts as. */
 const DEFAULT_THEME = {
-  primary: '#bd0052',
-  accent: '#e37a69',
+  primary: '#0284c7',
+  accent: '#38bdf8',
   cta: '#ffd666',
   ctaForeground: '#3a2600',
-  background: '#fff9f6',
-  foreground: '#111827',
+  background: '#f8fbff',
+  foreground: '#0f172a',
   radius: '1rem',
   fontHeading: 'hind-siliguri',
   fontBody: 'hind-siliguri',
+  preset: 'milkready',
 };
+
+/** Two-tone text logo: "Milk" in the brand colour, "Ready™" in ink. */
+const defaultBrand = (tenant) => ({
+  name: tenant?.name || '',
+  logoType: 'text',
+  logo: { url: '', publicId: '' },
+  logoTextAccent: 'Milk',
+  logoText: 'Ready™',
+  productImage: { url: '/templates/milkready/product-jar.webp', publicId: '' },
+  favicon: { url: '', publicId: '' },
+  loaderBadge: 'ডেলিভারি পূর্ববর্তী প্রস্তুতি',
+});
 
 /**
  * Creates a page with live AND draft populated, and published, so a brand new
@@ -75,6 +89,7 @@ export async function createPageFromTemplate({
   const sections = await buildSectionsFromTemplate(templateId);
 
   const content = {
+    brand: defaultBrand(tenant),
     seo: {
       title: { [tenant.defaultLocale]: tenant.name },
       description: {},
@@ -108,6 +123,7 @@ export async function publishPage({ db, pageId, userId, tenantSlug }) {
   if (!page) throw notFoundError('Page not found', 'PAGE_NOT_FOUND');
 
   const draft = page.draft || {};
+  page.brand = draft.brand ?? page.brand;
   page.seo = draft.seo ?? page.seo;
   page.theme = draft.theme ?? page.theme;
   page.tracking = draft.tracking ?? page.tracking;
@@ -123,6 +139,7 @@ export async function publishPage({ db, pageId, userId, tenantSlug }) {
     pageId: page._id,
     revision: page.revision,
     snapshot: {
+      brand: page.brand,
       seo: page.seo,
       theme: page.theme,
       tracking: page.tracking,
@@ -193,4 +210,22 @@ export async function restoreRevision({ db, pageId, revision, userId }) {
   return page;
 }
 
-export { DEFAULT_THEME };
+/** Throws the draft away: live is copied back over it. */
+export async function discardDraft({ db, pageId, userId }) {
+  const page = await db.LandingPage.findById(pageId);
+  if (!page) throw notFoundError('Page not found', 'PAGE_NOT_FOUND');
+  page.draft = {
+    brand: page.brand,
+    seo: page.seo,
+    theme: page.theme,
+    tracking: page.tracking,
+    sections: page.sections,
+    updatedAt: new Date(),
+    updatedBy: userId ?? null,
+    dirty: false,
+  };
+  await page.save();
+  return page;
+}
+
+export { DEFAULT_THEME, defaultBrand };

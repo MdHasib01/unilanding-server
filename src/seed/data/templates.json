@@ -1,35 +1,94 @@
 {
   "bd-dtc-v1": {
     "name": "Bangladesh DTC (single product)",
-    "description": "The section order that the reference /milkready page converts with: urgency, emotional hook, benefits, proof, objection handling, then the order form.",
+    "description": "The /milkready reference page, section for section: urgency bar, hero, the before/after image, benefits, reviews, certifications and doctors, FAQ, the two-paths comparison, the cost of waiting, guarantee, price, then the order form.",
     "sections": [
-      { "type": "announcementBar", "order": 0 },
-      { "type": "hero", "order": 1 },
-      { "type": "imagine", "order": 2 },
-      { "type": "benefitsOrbit", "order": 3 },
-      { "type": "reviewsCarousel", "order": 4 },
-      { "type": "certifications", "order": 5 },
-      { "type": "doctorsCarousel", "order": 6 },
-      { "type": "faq", "order": 7 },
-      { "type": "comparison", "order": 8 },
-      { "type": "emotionalCost", "order": 9 },
-      { "type": "guarantee", "order": 10 },
-      { "type": "pricingCard", "order": 11 },
-      { "type": "orderForm", "order": 12 },
-      { "type": "footer", "order": 13 },
-      { "type": "stickyCta", "order": 14 },
-      { "type": "floatingActions", "order": 15 }
+      {
+        "type": "announcementBar",
+        "order": 0
+      },
+      {
+        "type": "hero",
+        "order": 1
+      },
+      {
+        "type": "imagine",
+        "order": 2
+      },
+      {
+        "type": "benefitsOrbit",
+        "order": 3
+      },
+      {
+        "type": "reviewsCarousel",
+        "order": 4
+      },
+      {
+        "type": "certifications",
+        "order": 5
+      },
+      {
+        "type": "faq",
+        "order": 6
+      },
+      {
+        "type": "comparison",
+        "order": 7
+      },
+      {
+        "type": "emotionalCost",
+        "order": 8
+      },
+      {
+        "type": "guarantee",
+        "order": 9
+      },
+      {
+        "type": "pricingCard",
+        "order": 10
+      },
+      {
+        "type": "orderForm",
+        "order": 11
+      },
+      {
+        "type": "footer",
+        "order": 12
+      },
+      {
+        "type": "stickyCta",
+        "order": 13
+      },
+      {
+        "type": "floatingActions",
+        "order": 14
+      }
     ]
   },
   "minimal-v1": {
     "name": "Minimal (one screen)",
     "description": "Hero, three benefits, order form. For a quick test or a simple offer.",
     "sections": [
-      { "type": "hero", "order": 0 },
-      { "type": "benefitsGrid", "order": 1 },
-      { "type": "reviewsCarousel", "order": 2 },
-      { "type": "orderForm", "order": 3 },
-      { "type": "footer", "order": 4 }
+      {
+        "type": "hero",
+        "order": 0
+      },
+      {
+        "type": "benefitsGrid",
+        "order": 1
+      },
+      {
+        "type": "reviewsCarousel",
+        "order": 2
+      },
+      {
+        "type": "orderForm",
+        "order": 3
+      },
+      {
+        "type": "footer",
+        "order": 4
+      }
     ]
   }
 }
