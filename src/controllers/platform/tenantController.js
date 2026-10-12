@@ -421,8 +421,3 @@ export const listAllOrders = asyncHandler(async (req, res) => {
     pagination(total, page, limit)
   );
 });
-
-export const listPlans = asyncHandler(async (_req, res) => {
-  const plans = await Plan.find({}).sort({ sortOrder: 1 });
-  return ok(res, plans);
-});

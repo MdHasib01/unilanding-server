@@ -8,7 +8,7 @@
 import { createApp } from '../src/app.js';
 import { connectDB, disconnectDB } from '../src/config/db.js';
 import {
-  Tenant, Domain, User, TenantSettings, LandingPage, Product, Order, LandingPageRevision,
+  Tenant, Domain, User, TenantSettings, LandingPage, Product, Order, LandingPageRevision, Plan,
   scopedModels,
 } from '../src/models/index.js';
 import { env } from '../src/config/env.js';
@@ -65,10 +65,12 @@ const SLUG_B = `vp-beta-${S}`;
 
 const madeUsers = [];
 const madeTenants = [];
+const madePlans = [];
 
 async function cleanup() {
   const ids = madeTenants;
   await Promise.all([
+    Plan.deleteMany({ _id: { $in: madePlans.filter(Boolean) } }),
     User.deleteMany({ $or: [{ _id: { $in: madeUsers } }, { tenantId: { $in: ids } }] }),
     Domain.deleteMany({ tenantId: { $in: ids } }).setOptions({ allowCrossTenant: true }),
     TenantSettings.deleteMany({ tenantId: { $in: ids } }).setOptions({ allowCrossTenant: true }),
@@ -367,6 +369,106 @@ try {
   const paths = (invalid.json?.details ?? []).map((d) => d.path);
   truthy(paths.includes('name') && paths.includes('ownerEmail'),
     'details name both offending fields');
+
+  console.log('\n=== 15. Dashboard menus: domains, plans, audit, settings ===');
+  const dl = await call(`/platform/domains?tenantId=${tenantId}`, { jar: supJar, host: PLATFORM_HOST });
+  eq(dl.status, 200, 'support can list domains');
+  truthy(dl.json?.pagination?.total >= 2, 'domain list is paginated and includes the custom domain');
+  truthy((dl.json?.data ?? []).every((d) => d.tenant?.slug === SLUG_A), 'each domain row names its tenant');
+
+  eq((await call(`/platform/tenants/${tenantId}/domains`, { method: 'POST', jar: supJar,
+    host: PLATFORM_HOST, body: { host: `x-${S}.example.org` } })).status, 403,
+    'support cannot add a domain');
+
+  const atLimit = await call(`/platform/tenants/${tenantId}/domains`, { method: 'POST', jar: ownerJar,
+    host: PLATFORM_HOST, body: { host: `second-${S}.example.org` } });
+  eq(atLimit.json?.code, 'LIMIT_REACHED', "the plan's custom-domain limit is enforced");
+
+  const platformHostAdd = await call(`/platform/tenants/${tenantId}/domains`, { method: 'POST',
+    jar: ownerJar, host: PLATFORM_HOST, body: { host: `evil.${env.PLATFORM_HOST.split(':')[0]}` } });
+  eq(platformHostAdd.json?.code, 'PLATFORM_HOST', 'a platform hostname cannot be claimed');
+
+  const rm = await call(`/platform/domains/${pending._id}`, { method: 'DELETE', jar: ownerJar, host: PLATFORM_HOST });
+  eq(rm.status, 200, 'a non-primary custom domain can be removed');
+
+  const added = await call(`/platform/tenants/${tenantId}/domains`, { method: 'POST', jar: ownerJar,
+    host: PLATFORM_HOST, body: { host: `https://Shop-${S}.COM.bd:443/path` } });
+  eq(added.status, 201, 'add custom domain -> 201');
+  const nd = added.json?.data;
+  eq(nd?.host, `shop-${S}.com.bd`, 'host normalised (scheme, case, port, path stripped)');
+  eq(nd?.type, 'custom_apex', 'name under a two-part suffix (.com.bd) is an apex');
+  eq(nd?.verification?.method, 'txt', 'apex verifies by TXT');
+  eq(nd?.verification?.recordName, `_unilanding.shop-${S}.com.bd`, 'TXT record name returned');
+  eq(nd?.status, 'pending', 'starts pending');
+
+  const dupHost = await call(`/platform/tenants/${tenantId}/domains`, { method: 'POST', jar: ownerJar,
+    host: PLATFORM_HOST, body: { host: `shop-${S}.com.bd` } });
+  truthy([409, 422].includes(dupHost.status), 'the same host cannot be added twice');
+
+  const vr = await call(`/platform/domains/${nd._id}/verify`, { method: 'POST', jar: ownerJar, host: PLATFORM_HOST });
+  eq(vr.status, 200, 'verify answers 200 even when DNS is missing');
+  eq(vr.json?.data?.verified, false, 'an absent TXT record does not verify');
+  eq(vr.json?.data?.status, 'error', 'domain moves to error with a reason');
+  truthy(vr.json?.data?.verification?.lastError, 'lastError explains what is missing');
+
+  const earlyPrimary = await call(`/platform/domains/${nd._id}`, { method: 'PATCH', jar: ownerJar,
+    host: PLATFORM_HOST, body: { isPrimary: true } });
+  eq(earlyPrimary.json?.code, 'DOMAIN_NOT_SERVABLE', 'an unverified domain cannot become primary');
+
+  await call(`/platform/domains/${nd._id}`, { method: 'PATCH', jar: ownerJar, host: PLATFORM_HOST,
+    body: { status: 'active', ssl: { status: 'issued' } } });
+  const prim = await call(`/platform/domains/${nd._id}`, { method: 'PATCH', jar: ownerJar,
+    host: PLATFORM_HOST, body: { isPrimary: true } });
+  eq(prim.status, 200, 'active + certificate -> can be made primary');
+  eq((await Tenant.findById(tenantId)).primaryDomainId?.toString(), String(nd._id),
+    'tenant.primaryDomainId follows the new primary');
+  eq(await Domain.countDocuments({ tenantId, isPrimary: true }), 1, 'still exactly one primary');
+  const rp = await call(`/internal/resolve-host?host=shop-${S}.com.bd`, { headers: KEY });
+  eq(rp.json?.data?.found, true, 'the new primary serves the tenant');
+
+  const rmPrimary = await call(`/platform/domains/${nd._id}`, { method: 'DELETE', jar: ownerJar, host: PLATFORM_HOST });
+  eq(rmPrimary.json?.code, 'PRIMARY_DOMAIN', 'the primary domain cannot be removed');
+  const sub = await Domain.findOne({ tenantId, type: 'platform_subdomain' });
+  const rmSub = await call(`/platform/domains/${sub._id}`, { method: 'DELETE', jar: ownerJar, host: PLATFORM_HOST });
+  eq(rmSub.json?.code, 'PLATFORM_SUBDOMAIN', 'the platform subdomain cannot be removed');
+
+  const PLAN_CODE = `vp-plan-${S}`;
+  const planBody = {
+    code: PLAN_CODE, name: 'VP Plan', price: 999, interval: 'monthly',
+    limits: { landingPages: 2, products: 4, staffUsers: 1, ordersPerMonth: 100, customDomains: 0, mediaMb: 50 },
+    features: ['One thing'],
+  };
+  eq((await call('/platform/plans', { method: 'POST', jar: supJar, host: PLATFORM_HOST, body: planBody })).status,
+    403, 'support cannot create a plan');
+  const pc = await call('/platform/plans', { method: 'POST', jar: ownerJar, host: PLATFORM_HOST, body: planBody });
+  eq(pc.status, 201, 'owner creates a plan');
+  madePlans.push(pc.json?.data?._id);
+  eq((await call('/platform/plans', { method: 'POST', jar: ownerJar, host: PLATFORM_HOST, body: planBody })).json?.code,
+    'PLAN_CODE_TAKEN', 'a plan code is unique');
+  const pu = await call(`/platform/plans/${pc.json?.data?._id}`, { method: 'PATCH', jar: ownerJar,
+    host: PLATFORM_HOST, body: { price: 1299, limits: { products: 9 } } });
+  eq(pu.json?.data?.price, 1299, 'plan price updated');
+  eq(pu.json?.data?.limits?.products, 9, 'a single limit can be changed');
+  eq(pu.json?.data?.limits?.landingPages, 2, 'the other limits are kept');
+  const pl = await call('/platform/plans', { jar: ownerJar, host: PLATFORM_HOST });
+  truthy((pl.json?.data ?? []).every((p) => typeof p.tenantCount === 'number'), 'plan list carries tenant counts');
+
+  const au = await call(`/platform/audit?tenantId=${tenantId}&action=platform.domain`, { jar: ownerJar, host: PLATFORM_HOST });
+  eq(au.status, 200, 'owner reads the audit log');
+  const actions = new Set((au.json?.data ?? []).map((a) => a.action));
+  truthy(actions.has('platform.domain_added') && actions.has('platform.domain_removed'),
+    'domain changes are in the audit trail');
+  truthy((au.json?.data ?? []).every((a) => a.action.startsWith('platform.domain')), 'action prefix filter works');
+  truthy((au.json?.data ?? []).every((a) => a.userAgent === undefined), 'user agents are not sent to the client');
+  eq((await call('/platform/audit', { jar: supJar, host: PLATFORM_HOST })).status, 403,
+    'support cannot read the audit log');
+
+  const st = await call('/platform/settings', { jar: ownerJar, host: PLATFORM_HOST });
+  eq(st.status, 200, 'owner reads platform settings');
+  eq(typeof st.json?.data?.integrations?.email, 'boolean', 'integrations are reported as booleans');
+  truthy(!JSON.stringify(st.json?.data ?? {}).includes(env.JWT_SECRET), 'no secret leaks into settings');
+  eq((await call('/platform/settings', { jar: supJar, host: PLATFORM_HOST })).status, 403,
+    'support cannot read platform settings');
 
   console.log(`\n${'='.repeat(56)}`);
   console.log(`  ${pass} passed, ${fail} failed`);
